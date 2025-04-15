@@ -98,7 +98,7 @@ impl Player {
     }
 }
 
-// ===== Vector3 =====
+// ===== Vector =====
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Vector3 {

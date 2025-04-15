@@ -72,7 +72,6 @@ func send_dir_packet():
 	var dir_data = json.stringify(vector2_obj)
 	
 	self.send_packet("dir", dir_data)
-	print("sent dir: " + str(dir.x) + " / " + str(dir.y))
 	last_dir = dir
 
 func handle_init_packet(data):

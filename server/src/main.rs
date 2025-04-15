@@ -5,8 +5,6 @@ use std::io;
 use std::net::UdpSocket;
 use std::{thread, time::Duration};
 
-// 192.168.0.9
-
 fn main() {
     let socket = UdpSocket::bind("0.0.0.0:8080").unwrap();
     socket.set_nonblocking(true).unwrap();

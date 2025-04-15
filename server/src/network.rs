@@ -1,6 +1,6 @@
 use std::net::{SocketAddr, UdpSocket};
 
-use crate::game::{self, Vector2, Vector3};
+use crate::game::{self, Vector2};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
