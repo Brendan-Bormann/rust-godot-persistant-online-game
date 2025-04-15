@@ -1,0 +1,77 @@
+[gd_scene load_steps=8 format=3 uid="uid://cn87ql7nfaqgx"]
+
+[ext_resource type="Script" uid="uid://cxv38y4eu6e3d" path="res://interface.gd" id="1_cm0pq"]
+[ext_resource type="Texture2D" uid="uid://b0tdav6g8lwno" path="res://icon.svg" id="3_3dxm6"]
+[ext_resource type="Texture2D" uid="uid://b633qftr3bfp4" path="res://texture_07.png" id="4_cm0pq"]
+[ext_resource type="Script" uid="uid://dkoiuhdum0fn" path="res://game.gd" id="4_lgr22"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fos0i"]
+albedo_texture = ExtResource("4_cm0pq")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_cm0pq"]
+
+[sub_resource type="Environment" id="Environment_cm0pq"]
+fog_enabled = true
+fog_light_energy = 0.25
+
+[node name="Main" type="Node3D"]
+
+[node name="Interface" type="Node" parent="."]
+script = ExtResource("1_cm0pq")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Interface"]
+offset_left = 15.0
+offset_top = 12.0
+offset_right = 224.0
+offset_bottom = 112.0
+text = "Players Online: 0"
+
+[node name="ConnectButton" type="Button" parent="Interface"]
+offset_left = 58.0
+offset_top = 46.0
+offset_right = 147.0
+offset_bottom = 77.0
+text = "Connect"
+
+[node name="UsernameField" type="TextEdit" parent="Interface"]
+offset_left = 15.0
+offset_top = 87.0
+offset_right = 223.0
+offset_bottom = 126.0
+placeholder_text = "Username"
+
+[node name="ServerAddrField" type="TextEdit" parent="Interface"]
+offset_left = 15.0
+offset_top = 136.0
+offset_right = 223.0
+offset_bottom = 175.0
+placeholder_text = "Server:Port"
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(34, 61)
+scale = Vector2(0.296875, 0.296875)
+texture = ExtResource("3_3dxm6")
+
+[node name="Game" type="Node" parent="."]
+script = ExtResource("4_lgr22")
+
+[node name="Players" type="Node" parent="Game"]
+
+[node name="World" type="Node" parent="Game"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Game/World"]
+transform = Transform3D(4.98728, 0, 0, 0, 4.98728, 0, 0, 0, 4.98728, 0, -0.814044, 0)
+material_override = SubResource("StandardMaterial3D_fos0i")
+mesh = SubResource("PlaneMesh_cm0pq")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Game/World"]
+transform = Transform3D(0.708093, -0.497239, 0.501356, -0.00390392, 0.707249, 0.706954, -0.706109, -0.502546, 0.498857, 0, 1.5917, 0)
+light_energy = 1.646
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Game/World"]
+environment = SubResource("Environment_cm0pq")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.972002, 0.234973, 0, -0.234973, 0.972002, 0, 1.32956, 9.63216)
+
+[connection signal="pressed" from="Interface/ConnectButton" to="Interface" method="_on_connect_button_pressed"]

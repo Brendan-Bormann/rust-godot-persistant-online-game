@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://ctj5e476gudsv"]
+
+[ext_resource type="Script" uid="uid://tw3pfho0xkom" path="res://player.gd" id="1_4flbx"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_sh265"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_sh265"]
+
+[node name="Player" type="Node3D"]
+script = ExtResource("1_4flbx")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_sh265")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
+shape = SubResource("BoxShape3D_sh265")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.97659, 0.21511, 0, -0.21511, 0.97659, 0, 1.71743, 4.23448)
+
+[node name="NameTag" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000546455, 0.783068, -0.00278533)
+billboard = 1
+text = "Player"

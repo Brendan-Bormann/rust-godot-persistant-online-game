@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://cn87ql7nfaqgx"]
+
+[ext_resource type="Script" uid="uid://yr1tqh0cvnuv" path="res://network.gd" id="1_0e48y"]
+[ext_resource type="Texture2D" uid="uid://b0tdav6g8lwno" path="res://icon.svg" id="1_wtcfe"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Network" type="Network" parent="."]
+script = ExtResource("1_0e48y")
+
+[node name="Sprite2D" type="Player" parent="."]
+position = Vector2(103, 101)
+texture = ExtResource("1_wtcfe")
+
+[node name="Game" type="Node" parent="."]
