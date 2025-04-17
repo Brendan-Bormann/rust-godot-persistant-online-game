@@ -1,6 +1,7 @@
-[gd_scene load_steps=7 format=3 uid="uid://cn87ql7nfaqgx"]
+[gd_scene load_steps=8 format=3 uid="uid://cn87ql7nfaqgx"]
 
 [ext_resource type="Script" uid="uid://cxv38y4eu6e3d" path="res://interface.gd" id="1_cm0pq"]
+[ext_resource type="Texture2D" uid="uid://b0tdav6g8lwno" path="res://icon.svg" id="3_3dxm6"]
 [ext_resource type="Texture2D" uid="uid://b633qftr3bfp4" path="res://texture_07.png" id="4_cm0pq"]
 [ext_resource type="Script" uid="uid://dkoiuhdum0fn" path="res://game.gd" id="4_lgr22"]
 
@@ -17,6 +18,18 @@ fog_light_energy = 0.25
 
 [node name="Interface" type="Node" parent="."]
 script = ExtResource("1_cm0pq")
+
+[node name="Godot" type="Sprite2D" parent="Interface"]
+position = Vector2(34, 61)
+scale = Vector2(0.296875, 0.296875)
+texture = ExtResource("3_3dxm6")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="Interface"]
+offset_left = 15.0
+offset_top = 12.0
+offset_right = 224.0
+offset_bottom = 112.0
+text = "Players Online: 0"
 
 [node name="Login" type="Panel" parent="Interface"]
 anchors_preset = 8
@@ -40,10 +53,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -101.0
-offset_top = -47.5
-offset_right = -12.0
-offset_bottom = -12.5
+offset_left = -89.0
+offset_top = -35.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "Connect"
@@ -75,11 +86,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -101.0
-offset_top = 0.5
 offset_right = 101.0
-offset_bottom = 39.5
+offset_bottom = 39.0
 grow_horizontal = 2
-text = "Pooks"
 placeholder_text = "Username"
 caret_blink = true
 draw_tabs = true
@@ -110,66 +119,13 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -101.0
-offset_top = -78.5
+offset_top = -38.0
 offset_right = 101.0
-offset_bottom = -39.5
+offset_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 0
-text = "172.30.252.159:8080"
-placeholder_text = "127.0.0.1:8080"
+placeholder_text = "Server:Port"
 caret_blink = true
-
-[node name="Menu" type="Panel" parent="Interface"]
-visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -267.5
-offset_top = -175.5
-offset_right = 267.5
-offset_bottom = 175.5
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Title" type="RichTextLabel" parent="Interface/Menu"]
-layout_mode = 1
-offset_right = 61.0
-offset_bottom = 29.0
-text = "Menu"
-autowrap_mode = 0
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="OnlineCount" type="RichTextLabel" parent="Interface/Menu"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -152.0
-offset_right = 2.0
-offset_bottom = 31.0
-grow_horizontal = 0
-text = "Players Online: 0"
-fit_content = true
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="DisconnectButton" type="Button" parent="Interface/Menu"]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -110.0
-offset_top = -47.0
-offset_right = -11.0
-offset_bottom = -12.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "Disconnect"
 
 [node name="Game" type="Node" parent="."]
 script = ExtResource("4_lgr22")
@@ -194,4 +150,3 @@ environment = SubResource("Environment_cm0pq")
 transform = Transform3D(1, 0, 0, 0, 0.972002, 0.234973, 0, -0.234973, 0.972002, 0, 1.32956, 9.63216)
 
 [connection signal="pressed" from="Interface/Login/ConnectButton" to="Interface" method="_on_connect_button_pressed"]
-[connection signal="pressed" from="Interface/Menu/DisconnectButton" to="Interface" method="_on_disconnect_button_pressed"]

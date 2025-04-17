@@ -1,22 +1,26 @@
 extends Network
 
-var active = false
+@export var active = false
 var poll_rate = 0.01
 var timer = 0
 
 var last_dir: Vector2
+var last_rot: float
 var last_pong = 0
 const TIME_OUT = 5
+
+@export var my_id = 0
+@export var players: Dictionary
 
 func activate(server_addr: String, name: String):
 	start_server(server_addr)
 	active = true
-	self.send_packet("init", str(name))
+	self.send_packet(1, 0, str(name))
 
 func deactivate():
 	stop_server()
 	active = false
-	Global.players = {}
+	players = {}
 
 func _ready() -> void:
 	pass
@@ -28,34 +32,51 @@ func _physics_process(delta: float) -> void:
 		
 		if timer > poll_rate:
 			timer = 0
-			self.send_packet("map", "map")
+			self.send_packet(2, 0, "")
 		else:
 			timer += delta
 
 
 func recv_packet():
 	var result = self.read_packet()
-	var packet_type = result[0]
-	var packet_data = result[1]
 	
-	if packet_type == "":
+	var packet_type: int = int(result[0])
+	var packet_subtype: int = int(result[1])
+	var payload: String = result[2]
+	
+	if packet_type == -1:
 		return
 	
-	#print("GODOT: Received " + packet_type + " packet.")
+	#print("GODOT: Received packet: " + result[0] + "|" + result[1])
 	
-	var json = JSON.new()
-	json.parse(packet_data)
-	var data = json.data
-	
-	if packet_type == "init" and data != null:
-		handle_init_packet(data)
-	if packet_type == "map" and data != null:
-		handle_map_packet(data)
-	if packet_type == "pong":
-		last_pong = Time.get_unix_time_from_system()
+	handle_packet(packet_type, packet_subtype, payload)
+
+func handle_packet(packet_type: int, packet_subtype: int, payload: String):
+	match packet_type:
+		0:
+			last_pong = Time.get_unix_time_from_system()
+		1:
+			match packet_subtype:
+				0:
+					var player_data = payload.split(";")
+					my_id = player_data[0]
+				_:
+					pass
+		2:
+			match packet_subtype:
+				0:
+					handle_map_packet(payload)
+		3:
+			match packet_subtype:
+				0:
+					pass
+				1:
+					pass
+		_:
+			pass
 
 func send_ping_packet():
-	self.send_packet("ping", "ping")
+	self.send_packet(0, 0, "")
 
 func send_dir_packet():
 	var dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
@@ -63,21 +84,28 @@ func send_dir_packet():
 	if dir == last_dir:
 		return
 	
-	var vector2_obj = {
-		"x": dir.x,
-		"y": dir.y
-	}
-	
-	var json = JSON.new()
-	var dir_data = json.stringify(vector2_obj)
-	
-	self.send_packet("dir", dir_data)
+	self.send_packet(3, 0, str(my_id) + ";" + str(snapped(dir.x, 0.01)) + "," + str(snapped(dir.y, 0.01)))
 	last_dir = dir
 
-func handle_init_packet(data):
-	Global.my_id = data['id']
-	print("set my id to ", data['id'])
+func send_rot_packet(rot):
+	if abs(rot - last_rot) > 0.01:
+		self.send_packet(3, 1, str(my_id) + ";" + str(snapped(rot, 0.01)))
+		last_rot = rot
 
-func handle_map_packet(data):
-	for player in data:
-		Global.players[player.id] = player
+func handle_init_packet(data):
+	my_id = data['id']
+
+func handle_map_packet(payload: String):
+	var player_data = payload.split("+")
+	
+	for player in player_data:
+		var player_values: PackedStringArray = player.split(";")
+		
+		if player_values.size() > 1:
+			players[player_values[0]] = {
+				"id": player_values[0],
+				"username": player_values[1],
+				"position": Vector3(float(player_values[2].split(",")[0]), float(player_values[2].split(",")[1]), float(player_values[2].split(",")[2])),
+				"direction": Vector2(float(player_values[3].split(",")[0]), float(player_values[3].split(",")[1])),
+				"rotation": float(player_values[4])
+			}

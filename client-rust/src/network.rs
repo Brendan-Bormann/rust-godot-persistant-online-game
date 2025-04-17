@@ -7,20 +7,47 @@ use std::str::from_utf8;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Packet {
-    pub packet_type: String,
-    pub packet_data: String,
+    pub packet_type: i16,
+    pub packet_subtype: i16,
+    pub payload: String,
 }
 
 impl Packet {
-    pub fn new(packet_type: String, packet_data: String) -> Packet {
+    pub fn new(t: i16, s: i16, p: String) -> Packet {
         Packet {
-            packet_type,
-            packet_data,
+            packet_type: t,
+            packet_subtype: s,
+            payload: p,
         }
     }
 
-    pub fn serialize_packet(packet: Packet) -> String {
-        serde_json::to_string(&packet).expect("Failed to serialize packet")
+    pub fn encode(packet: Packet) -> String {
+        format!(
+            "{}|{}|{}",
+            packet.packet_type, packet.packet_subtype, packet.payload
+        )
+    }
+
+    pub fn encode_new(t: i16, s: i16, p: String) -> String {
+        format!("{}|{}|{}", t, s, p)
+    }
+
+    pub fn decode(packet: String) -> Packet {
+        let mut parts = packet.splitn(3, '|'); // split into max 3 parts
+
+        let packet_type = parts
+            .next()
+            .and_then(|s| s.parse::<i16>().ok())
+            .unwrap_or(-1);
+
+        let subtype = parts
+            .next()
+            .and_then(|s| s.parse::<i16>().ok())
+            .unwrap_or(-1);
+
+        let payload = parts.next().unwrap_or("").to_string();
+
+        Packet::new(packet_type, subtype, payload)
     }
 }
 
@@ -43,42 +70,22 @@ impl Network {
     #[func]
     fn start_server(&mut self, server_addr: String) {
         godot_print!("RUST: addr - {:?}", server_addr);
+        let socket = UdpSocket::bind("0.0.0.0:8081").expect("failed to bind socket");
+        socket
+            .set_nonblocking(true)
+            .expect("failed to set socket to nonblocking");
 
-        let socket_addr = match server_addr.parse::<SocketAddr>() {
-            Ok(addr) => addr,
-            Err(e) => {
-                godot_print!("RUST: addr err - {:?}", e);
-                panic!("addr err - {:?}", e)
-            }
-        };
-
-        let socket = match UdpSocket::bind("0.0.0.0:8081") {
-            Ok(socket) => socket,
-            Err(e) => {
-                godot_print!("RUST: socket err - {:?}", e);
-                panic!("socket err - {:?}", e)
-            }
-        };
-
-        match socket.set_nonblocking(true) {
-            Ok(_) => {}
-            Err(e) => {
-                godot_print!("RUST: socket nonblocking err - {:?}", e);
-                panic!("socket nonblocking err - {:?}", e)
-            }
-        }
-
-        match socket.connect(socket_addr) {
-            Ok(_) => {}
-            Err(e) => {
-                godot_print!("RUST: socket connect err - {:?}", e);
-                panic!("socket connect err - {:?}", e)
-            }
-        }
+        let addr = server_addr
+            .parse::<SocketAddr>()
+            .expect(&format!("got bad server addr {}", server_addr));
+        socket.connect(addr).expect(&format!(
+            "failed to connect socket to server addr {}",
+            server_addr
+        ));
 
         self.socket = Some(socket);
 
-        godot_print!("RUST: server started - connected to {}", socket_addr);
+        godot_print!("RUST: server started - connected to {}", addr);
     }
 
     #[func]
@@ -92,11 +99,10 @@ impl Network {
     }
 
     #[func]
-    fn send_packet(&mut self, packet_type: String, packet_data: String) {
+    fn send_packet(&mut self, packet_type: i16, packet_subtype: i16, payload: String) {
         match self.socket.as_mut() {
             Some(socket) => {
-                let packet_to_send = Packet::new(packet_type, packet_data);
-                let packet_string = Packet::serialize_packet(packet_to_send);
+                let packet_string = Packet::encode_new(packet_type, packet_subtype, payload);
 
                 match socket.send(packet_string.as_bytes()) {
                     Ok(_) => {}
@@ -105,24 +111,30 @@ impl Network {
                     }
                 }
             }
-            _ => godot_print!("RUST: tried to send packet with no socket"),
+            _ => return,
         }
     }
 
     #[func]
-    fn read_packet(&mut self) -> [GString; 2] {
+    fn read_packet(&mut self) -> [GString; 3] {
         let mut buf = [0; 10000];
 
         match self.socket.as_mut() {
             Some(socket) => match socket.recv(&mut buf) {
                 Ok(len) => {
-                    let message_string = from_utf8(&buf[..len])
-                        .expect("failed to parse packet")
-                        .trim();
-                    let packet: Packet =
-                        serde_json::from_str(message_string).expect("failed to deserialize packet");
+                    if len > 0 {
+                        let message_string = from_utf8(&buf[..len])
+                            .expect("failed to parse packet")
+                            .trim();
 
-                    return [packet.packet_type.into(), packet.packet_data.into()];
+                        let packet = Packet::decode(message_string.into());
+
+                        return [
+                            packet.packet_type.to_string().into(),
+                            packet.packet_subtype.to_string().into(),
+                            packet.payload.into(),
+                        ];
+                    }
                 }
                 Err(e) => {
                     if e.kind() != ErrorKind::WouldBlock {
@@ -133,6 +145,10 @@ impl Network {
             _ => godot_print!("RUST: tried to recv packet with no socket"),
         }
 
-        return ["empty".into(), "empty".into()];
+        return [
+            (-1).to_string().into(),
+            (-1).to_string().into(),
+            "empty".into(),
+        ];
     }
 }
