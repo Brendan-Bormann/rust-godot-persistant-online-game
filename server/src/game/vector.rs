@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct Vector3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 impl Vector3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Vector3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Vector3 {
         Vector3 { x, y, z }
     }
 
@@ -31,10 +31,20 @@ impl Vector3 {
 }
 
 impl Vector3 {
-    pub fn add_to(&mut self, delta: Vector3) {
+    pub fn add_to(&mut self, delta: Vector3) -> Self {
         self.x += delta.x;
         self.y += delta.y;
         self.z += delta.z;
+
+        self.to_owned()
+    }
+
+    pub fn scale(&mut self, factor: f32) -> Self {
+        self.x = self.x * factor;
+        self.y = self.y * factor;
+        self.z = self.z * factor;
+
+        self.to_owned()
     }
 
     pub fn to_string(self) -> String {
@@ -42,14 +52,14 @@ impl Vector3 {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
 pub struct Vector2 {
-    pub x: f64,
-    pub y: f64,
+    pub x: f32,
+    pub y: f32,
 }
 
 impl Vector2 {
-    pub fn new(x: f64, y: f64) -> Vector2 {
+    pub fn new(x: f32, y: f32) -> Vector2 {
         Vector2 { x, y }
     }
 
@@ -71,9 +81,18 @@ impl Vector2 {
 }
 
 impl Vector2 {
-    pub fn add_to(&mut self, delta: Vector2) {
+    pub fn add_to(&mut self, delta: Vector2) -> Self {
         self.x += delta.x;
         self.y += delta.y;
+
+        self.to_owned()
+    }
+
+    pub fn scale(&mut self, factor: f32) -> Self {
+        self.x = self.x * factor;
+        self.y = self.y * factor;
+
+        self.to_owned()
     }
 
     pub fn to_string(self) -> String {
