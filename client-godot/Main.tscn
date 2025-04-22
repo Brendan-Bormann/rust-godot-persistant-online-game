@@ -179,7 +179,7 @@ script = ExtResource("4_lgr22")
 [node name="World" type="Node" parent="Game"]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Game/World"]
-transform = Transform3D(4.98728, 0, 0, 0, 4.98728, 0, 0, 0, 4.98728, 0, -0.814044, 0)
+transform = Transform3D(4.98728, 0, 0, 0, 4.98728, 0, 0, 0, 4.98728, 0, 0, 0)
 material_override = SubResource("StandardMaterial3D_fos0i")
 mesh = SubResource("PlaneMesh_cm0pq")
 

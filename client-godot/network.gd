@@ -10,7 +10,10 @@ var last_pong = 0
 const TIME_OUT = 5
 
 @export var my_id = 0
+@export var my_player: Node3D
 @export var players: Dictionary
+
+var my_player_last_rotation: float;
 
 func activate(server_addr: String, name: String):
 	start_server(server_addr)
@@ -29,6 +32,7 @@ func _physics_process(delta: float) -> void:
 	if active: 
 		recv_packet()
 		send_dir_packet()
+		send_rotation_packet()
 		
 		if timer > poll_rate:
 			timer = 0
@@ -87,10 +91,12 @@ func send_dir_packet():
 	self.send_packet(3, 0, str(my_id) + ";" + str(snapped(dir.x, 0.01)) + "," + str(snapped(dir.y, 0.01)))
 	last_dir = dir
 
-func send_rot_packet(rot):
-	if abs(rot - last_rot) > 0.01:
-		self.send_packet(3, 1, str(my_id) + ";" + str(snapped(rot, 0.01)))
-		last_rot = rot
+func send_rotation_packet():
+	if self.active and self.my_player != null:
+		var new_rotation = snapped(my_player.rotation.y, 0.01);
+		if my_player_last_rotation != new_rotation:
+			self.send_packet(3, 1, str(my_id) + ";" + str(new_rotation))
+			my_player_last_rotation = new_rotation
 
 func handle_init_packet(data):
 	my_id = data['id']
@@ -106,6 +112,8 @@ func handle_map_packet(payload: String):
 				"id": player_values[0],
 				"username": player_values[1],
 				"position": Vector3(float(player_values[2].split(",")[0]), float(player_values[2].split(",")[1]), float(player_values[2].split(",")[2])),
-				"direction": Vector2(float(player_values[3].split(",")[0]), float(player_values[3].split(",")[1])),
-				"rotation": float(player_values[4])
+				"velocity": Vector3(float(player_values[3].split(",")[0]), float(player_values[3].split(",")[1]), float(player_values[3].split(",")[2])),
+				"direction": Vector2(float(player_values[4].split(",")[0]), float(player_values[4].split(",")[1])),
+				"rotation": float(player_values[5]),
+				"speed": float(player_values[6]),
 			}

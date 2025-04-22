@@ -10,3 +10,6 @@ An online server-based game, using UDP. This base implementation allows users to
 3. Last and most simply, start the rust server by going into the `/server` folder and running `cargo run` or optionally `cargo run --release`.
 
 The server will now be running @ `0.0.0.0:8080` so find your server's IP address and share it with the clients. They will enter this address wthin the client and connect!
+
+# Architecture
+![Architecture](https://i.imgur.com/KOXNykq.png)

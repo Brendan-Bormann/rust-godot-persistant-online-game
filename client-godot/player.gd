@@ -5,14 +5,14 @@ var id: int = 0
 var active_player: bool = false
 var my_name: String
 var target_position = position
-var position_lerp = 0.5
+var position_lerp = 0.15
 var camera_rotation_speed = 0.001
 
 @onready var my_cam = $CameraPivot/PlayerCamera
 @onready var my_cam_pivot = $CameraPivot
 @onready var my_name_tag = $NameTag
 
-func spawn(new_id: int, new_position: Vector3, new_rotation: float, new_name: String) -> Player:
+func spawn(new_id: int, new_position: Vector3, new_velocity: Vector3, new_rotation: float, new_name: String) -> Player:
 	id = new_id
 	position = new_position
 	rotation.y = new_rotation
@@ -22,6 +22,7 @@ func spawn(new_id: int, new_position: Vector3, new_rotation: float, new_name: St
 	if str(id) == GlobalNetwork.my_id:
 		active_player = true
 		my_cam.current = true
+		GlobalNetwork.my_player = self
 	
 	return self
 
@@ -37,6 +38,7 @@ func _ready() -> void:
 	pass
 
 func _process(delta: float) -> void:
+	print(position)
 	move()
 	
 	if active_player:
@@ -49,4 +51,4 @@ func _input(event):
 	if active_player:
 		if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			self.rotate(Vector3.UP, event.relative.x * -camera_rotation_speed)
-			GlobalNetwork.send_rot_packet(self.rotation.y)
+			#GlobalNetwork.send_rot_packet(self.rotation.y)
