@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::game;
-use rapier3d::prelude::*;
+use rapier3d::{na::clamp, prelude::*};
 
 use super::player::Player;
 
@@ -26,7 +26,7 @@ pub struct PhysicsManager {
 
 impl PhysicsManager {
     pub fn new() -> Self {
-        let gravity = vector![0.0, -9.81, 0.0];
+        let gravity = vector![0.0, -20.0, 0.0];
         let integration_parameters = IntegrationParameters::default();
         let physics_pipeline = PhysicsPipeline::new();
         let island_manager = IslandManager::new();
@@ -41,8 +41,8 @@ impl PhysicsManager {
         let mut collider_set = ColliderSet::new();
         let rigid_body_set = RigidBodySet::new();
 
-        let floor = ColliderBuilder::cuboid(100.0, 0.1, 100.0)
-            .translation(vector![0.0, -0.1, 0.0]) // place it just below y=0
+        let floor = ColliderBuilder::cuboid(1000.0, 0.1, 1000.0)
+            .translation(vector![0.0, -0.1, 0.0])
             .build();
         collider_set.insert(floor);
 
@@ -70,9 +70,10 @@ impl PhysicsManager {
     pub fn create_player_rb(&mut self, id: &str) -> RigidBodyHandle {
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0, 0.0])
-            .linear_damping(20.0)
+            .linear_damping(5.0)
+            .gravity_scale(1.0)
             .build();
-        let collider = ColliderBuilder::capsule_y(0.5, 0.5).build();
+        let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5).build();
 
         let player_body_handle = self.rigid_body_set.insert(rigid_body);
 
@@ -113,8 +114,16 @@ impl PhysicsManager {
                 if let Some(rb) = self.get_player_mut(&player.id) {
                     let mut velocity = *rb.linvel();
 
-                    velocity.x += player.input_direction.x * player.speed * delta_time;
-                    velocity.z += player.input_direction.y * player.speed * delta_time;
+                    velocity.x += clamp(
+                        player.input_direction.x * player.speed * delta_time,
+                        -5.0,
+                        5.0,
+                    );
+                    velocity.z += clamp(
+                        player.input_direction.y * player.speed * delta_time,
+                        -5.0,
+                        5.0,
+                    );
 
                     rb.set_linvel(velocity, true);
 
