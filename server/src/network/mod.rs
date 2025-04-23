@@ -80,10 +80,10 @@ impl Network {
     ) {
         let packet = Packet::decode(packet);
 
-        // println!(
-        //     "- Processing packet from {}: [{}|{}] (size: {})",
-        //     addr, packet.packet_type, packet.packet_subtype, len
-        // );
+        println!(
+            "- Processing packet from {}: [{}|{}] (size: {})",
+            addr, packet.packet_type, packet.packet_subtype, len
+        );
 
         match packet.packet_type {
             0 => {
