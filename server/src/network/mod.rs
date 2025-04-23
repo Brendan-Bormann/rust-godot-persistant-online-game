@@ -147,7 +147,6 @@ impl Network {
                 // input
                 match packet.packet_subtype {
                     0 => {
-                        println!("packet {:?}", packet.payload);
                         // movement_input - packet.payload = id;dir_x,dir_y;rotation
                         let payload = parse_payload(&packet.payload);
                         let id = payload[0];
