@@ -31,8 +31,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if active: 
 		recv_packet()
-		send_dir_packet()
-		send_rotation_packet()
+		send_movement_packet()
 		
 		if timer > poll_rate:
 			timer = 0
@@ -82,21 +81,18 @@ func handle_packet(packet_type: int, packet_subtype: int, payload: String):
 func send_ping_packet():
 	self.send_packet(0, 0, "")
 
-func send_dir_packet():
+func send_movement_packet():
+	if my_player == null:
+		return
+	
 	var dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	var new_rotation = snapped(my_player.rotation.y, 0.01);
 	
 	if dir == last_dir:
 		return
 	
-	self.send_packet(3, 0, str(my_id) + ";" + str(snapped(dir.x, 0.01)) + "," + str(snapped(dir.y, 0.01)))
+	self.send_packet(3, 0, str(my_id) + ";" + str(snapped(dir.x, 0.01)) + "," + str(snapped(dir.y, 0.01)) + ";" + str(new_rotation))
 	last_dir = dir
-
-func send_rotation_packet():
-	if self.active and self.my_player != null:
-		var new_rotation = snapped(my_player.rotation.y, 0.01);
-		if my_player_last_rotation != new_rotation:
-			self.send_packet(3, 1, str(my_id) + ";" + str(new_rotation))
-			my_player_last_rotation = new_rotation
 
 func handle_init_packet(data):
 	my_id = data['id']

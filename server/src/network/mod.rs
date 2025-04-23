@@ -147,23 +147,20 @@ impl Network {
                 // input
                 match packet.packet_subtype {
                     0 => {
-                        // direction - packet.payload = id;x,y
+                        println!("packet {:?}", packet.payload);
+                        // movement_input - packet.payload = id;dir_x,dir_y;rotation
                         let payload = parse_payload(&packet.payload);
                         let id = payload[0];
+
                         let dirs: Vec<&str> = payload[1].split(",").collect();
                         let x: f32 = dirs[0].parse().unwrap_or(0.0);
                         let y: f32 = dirs[1].parse().unwrap_or(0.0);
+
+                        let rotation: f32 = payload[2].parse().unwrap();
+
                         let input_direction: Vector2 = Vector2::new(x, y);
-                        self.mem_db.set_player_direction(id.into(), input_direction);
-                        let encoded = Packet::encode_new(3, 0, "".into());
-                        socket.send_to(encoded.as_bytes(), addr).unwrap();
-                    }
-                    1 => {
-                        // rotation - packet.payload = id;r
-                        let payload = parse_payload(&packet.payload);
-                        let id = payload[0];
-                        let rotation: f32 = payload[1].parse().unwrap();
-                        self.mem_db.set_player_rotation(id.into(), rotation);
+                        self.mem_db
+                            .set_player_movement_input(id.into(), input_direction, rotation);
                         let encoded = Packet::encode_new(3, 0, "".into());
                         socket.send_to(encoded.as_bytes(), addr).unwrap();
                     }

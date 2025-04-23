@@ -78,6 +78,17 @@ impl Vector2 {
         let pos_vec: Vec<&str> = vec2_string.split(",").collect();
         Vector2::new(pos_vec[0].parse().unwrap(), pos_vec[1].parse().unwrap())
     }
+
+    pub fn rotate(vec2: Vector2, degrees: f32) -> Vector2 {
+        let radians = (degrees * -100.0).to_radians();
+        let cos_theta = radians.cos();
+        let sin_theta = radians.sin();
+
+        Vector2::new(
+            vec2.x * cos_theta - vec2.y * sin_theta,
+            vec2.x * sin_theta + vec2.y * cos_theta,
+        )
+    }
 }
 
 impl Vector2 {
@@ -85,14 +96,14 @@ impl Vector2 {
         self.x += delta.x;
         self.y += delta.y;
 
-        self.to_owned()
+        self.clone()
     }
 
     pub fn scale(&mut self, factor: f32) -> Self {
         self.x = self.x * factor;
         self.y = self.y * factor;
 
-        self.to_owned()
+        self.clone()
     }
 
     pub fn to_string(self) -> String {

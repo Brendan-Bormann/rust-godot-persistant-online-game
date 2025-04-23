@@ -1,6 +1,7 @@
 mod game;
 mod network;
 mod storage;
+mod test_main;
 
 use game::physics::PhysicsManager;
 use network::Network;

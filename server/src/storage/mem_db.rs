@@ -125,15 +125,10 @@ impl MemDB {
         self.upsert_player(player).unwrap()
     }
 
-    pub fn set_player_direction(&mut self, id: String, dir: Vector2) -> Player {
+    pub fn set_player_movement_input(&mut self, id: String, dir: Vector2, rot: f32) -> Player {
         let mut player = self.get_player(&id).unwrap().unwrap();
         player.input_direction = dir;
-        self.upsert_player(player).unwrap()
-    }
-
-    pub fn set_player_rotation(&mut self, id: String, rotation: f32) -> Player {
-        let mut player = self.get_player(&id).unwrap().unwrap();
-        player.rotation = rotation;
+        player.rotation = rot;
         self.upsert_player(player).unwrap()
     }
 

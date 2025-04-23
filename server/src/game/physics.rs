@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use crate::game;
 use rapier3d::{na::clamp, prelude::*};
+use std::collections::HashMap;
 
-use super::player::Player;
+use super::{player::Player, vector::Vector2};
 
 pub struct PhysicsManager {
     pub gravity: Vector<Real>,
@@ -113,17 +112,10 @@ impl PhysicsManager {
             Some(_) => {
                 if let Some(rb) = self.get_player_mut(&player.id) {
                     let mut velocity = *rb.linvel();
+                    let rotated_di = Vector2::rotate(player.input_direction, player.rotation);
 
-                    velocity.x += clamp(
-                        player.input_direction.x * player.speed * delta_time,
-                        -5.0,
-                        5.0,
-                    );
-                    velocity.z += clamp(
-                        player.input_direction.y * player.speed * delta_time,
-                        -5.0,
-                        5.0,
-                    );
+                    velocity.x += clamp(rotated_di.x * player.speed * delta_time, -5.0, 5.0);
+                    velocity.z += clamp(rotated_di.y * player.speed * delta_time, -5.0, 5.0);
 
                     rb.set_linvel(velocity, true);
 
