@@ -1,13 +1,13 @@
 mod game;
 mod network;
 mod storage;
-mod test_main;
 
+use crate::game::game::Game;
 use game::physics::PhysicsManager;
 use network::Network;
 use storage::mem_db::MemDB;
 
-use crate::game::game::Game;
+use r2d2;
 use std::io;
 use std::net::UdpSocket;
 use std::{
@@ -16,24 +16,26 @@ use std::{
 };
 
 // ticks per second
-const TPS: u64 = 20;
-const DELTA: f32 = 1.0 / TPS as f32;
+const TICK_RATE: u64 = 20;
+const MS_PER_TICK: u64 = 1000 / TICK_RATE;
 
 fn main() {
     let socket = UdpSocket::bind("0.0.0.0:8080").unwrap();
     socket.set_nonblocking(true).unwrap();
 
+    let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let pool = r2d2::Pool::builder().build(client).unwrap();
+
+    let game_mem_db = MemDB::new(pool.get().unwrap());
     let _game = thread::spawn(move || {
         let pm = PhysicsManager::new();
-        let mem_db = MemDB::new();
-        let mut game = Game::new(mem_db, pm);
+        let mut game = Game::new(game_mem_db, pm);
 
-        let tick_duration = Duration::from_secs_f32(1.0 / TPS as f32);
-
+        let tick_duration = Duration::from_millis(MS_PER_TICK);
         loop {
             let start = Instant::now();
 
-            game.game_tick(DELTA);
+            game.game_tick(MS_PER_TICK as f32 / 1000.0);
 
             let elapsed = start.elapsed();
             if elapsed < tick_duration {
@@ -42,9 +44,9 @@ fn main() {
         }
     });
 
+    let network_mem_db = MemDB::new(pool.get().unwrap());
     loop {
-        let mem_db = MemDB::new();
-        let mut network = Network::new(mem_db);
+        let mut network = Network::new(network_mem_db);
 
         loop {
             let mut buf = [0; 65507];

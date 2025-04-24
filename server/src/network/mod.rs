@@ -64,9 +64,7 @@ pub struct Network {
 
 impl Network {
     pub fn new(mem_db: MemDB) -> Self {
-        Network {
-            mem_db: MemDB::new(),
-        }
+        Network { mem_db }
     }
 }
 

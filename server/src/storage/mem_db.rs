@@ -1,3 +1,4 @@
+use r2d2::PooledConnection;
 use redis::{Client, Commands, Connection, RedisResult};
 
 use crate::game::{
@@ -6,44 +7,38 @@ use crate::game::{
 };
 
 pub struct MemDB {
-    client: Client,
+    con: PooledConnection<Client>,
 }
 
 impl MemDB {
-    pub fn new() -> MemDB {
-        let client = redis::Client::open("redis://127.0.0.1/").unwrap();
-        MemDB { client }
+    pub fn new(con_from_pool: PooledConnection<Client>) -> MemDB {
+        MemDB { con: con_from_pool }
     }
 }
 
 impl MemDB {
     fn get(&mut self, pre: &str, key: &str) -> RedisResult<Option<String>> {
         let k = format!("{}:{}", pre, key);
-        let mut con: Connection = self.client.get_connection().unwrap();
-        con.get(&k)
+        self.con.get(&k)
     }
 
     fn get_raw(&mut self, key: &str) -> RedisResult<Option<String>> {
-        let mut con: Connection = self.client.get_connection().unwrap();
-        con.get(&key)
+        self.con.get(&key)
     }
 
     fn set(&mut self, pre: &str, key: &str, value: &str) -> RedisResult<()> {
         let k = format!("{}:{}", pre, key);
-        let mut con: Connection = self.client.get_connection().unwrap();
-        con.set(k, value)
+        self.con.set(k, value)
     }
 
     fn del(&mut self, pre: &str, key: &str) -> RedisResult<()> {
         let k = format!("{}:{}", pre, key);
-        let mut con: Connection = self.client.get_connection().unwrap();
-        con.del(k)
+        self.con.del(k)
     }
 
     fn get_all_keys(&mut self, pre: &str) -> Vec<String> {
         let k = format!("{}:*", pre);
-        let mut con: Connection = self.client.get_connection().unwrap();
-        let collection = con.keys(&k).unwrap();
+        let collection = self.con.keys(&k).unwrap();
 
         collection
     }
@@ -71,8 +66,7 @@ impl MemDB {
     }
 
     pub fn wipe(&mut self) {
-        let mut con: Connection = self.client.get_connection().unwrap();
-        let _result: String = redis::cmd("FLUSHALL").query(&mut con).unwrap();
+        let _result: String = redis::cmd("FLUSHALL").query(&mut self.con).unwrap();
     }
 
     pub fn get_player(&mut self, id: &str) -> Result<Option<Player>, ()> {
