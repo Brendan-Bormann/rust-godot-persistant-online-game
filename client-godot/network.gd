@@ -1,4 +1,4 @@
-extends Network
+extends NetworkNode
 
 @export var active = false
 var poll_rate = 0.01
@@ -13,15 +13,21 @@ const TIME_OUT = 5
 @export var my_player: Node3D
 @export var players: Dictionary
 
+@export var packets_read: int
+@export var packets_read_recently: int
+@export var packets_read_per_interval: int
+@export var packet_read_interval = 1.0
+var packet_read_timer = 0.0
+
 var my_player_last_rotation: float;
 
 func activate(server_addr: String, name: String):
-	start_server(server_addr)
+	self.start_server(server_addr)
 	active = true
 	self.send_packet(1, 0, str(name))
 
 func deactivate():
-	stop_server()
+	self.stop_server()
 	active = false
 	players = {}
 
@@ -29,32 +35,29 @@ func _ready() -> void:
 	pass
 
 func _physics_process(delta: float) -> void:
-	if active: 
-		recv_packet()
-		send_movement_packet()
+	if is_active():
+		handle_packet(self.read_packet())
 		
 		if timer > poll_rate:
 			timer = 0
+			send_movement_packet()
 			self.send_packet(2, 0, "")
 		else:
 			timer += delta
+	
+	if packet_read_timer > packet_read_interval:
+		packets_read_per_interval = packets_read_recently
+		packets_read += packets_read_recently
+		packets_read_recently = 0
+		packet_read_timer = 0.0
+	else:
+		packet_read_timer += delta
 
-
-func recv_packet():
-	var result = self.read_packet()
+func handle_packet(packet: Array[String]):
+	var packet_type: int = int(packet[0])
+	var packet_subtype: int = int(packet[1])
+	var payload: String = packet[2]
 	
-	var packet_type: int = int(result[0])
-	var packet_subtype: int = int(result[1])
-	var payload: String = result[2]
-	
-	if packet_type == -1:
-		return
-	
-	#print("GODOT: Received packet: " + result[0] + "|" + result[1])
-	
-	handle_packet(packet_type, packet_subtype, payload)
-
-func handle_packet(packet_type: int, packet_subtype: int, payload: String):
 	match packet_type:
 		0:
 			last_pong = Time.get_unix_time_from_system()
@@ -84,7 +87,7 @@ func send_ping_packet():
 func send_movement_packet():
 	if my_player == null:
 		return
-	
+		
 	var dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var new_rotation = snapped(my_player.rotation.y, 0.01);
 	

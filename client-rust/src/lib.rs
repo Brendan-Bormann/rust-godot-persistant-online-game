@@ -1,8 +1,10 @@
 use godot::prelude::*;
 
-mod network;
+mod network_node;
+mod packet;
+mod rust_network;
 
-struct MyExtension;
+struct Network;
 
 #[gdextension]
-unsafe impl ExtensionLibrary for MyExtension {}
+unsafe impl ExtensionLibrary for Network {}

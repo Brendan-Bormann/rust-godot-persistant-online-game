@@ -9,7 +9,7 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(mem_db: MemDB, pm: PhysicsManager) -> Game {
+    pub fn new(mem_db: MemDB, pm: PhysicsManager) -> Self {
         Game { mem_db, pm }
     }
 }

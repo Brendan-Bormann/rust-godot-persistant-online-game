@@ -38,7 +38,6 @@ func _ready() -> void:
 	pass
 
 func _process(delta: float) -> void:
-	print(position)
 	move()
 	
 	if active_player:

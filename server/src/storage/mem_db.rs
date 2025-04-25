@@ -1,5 +1,5 @@
 use r2d2::PooledConnection;
-use redis::{Client, Commands, Connection, RedisResult};
+use redis::{Client, Commands, RedisResult};
 
 use crate::game::{
     player::Player,

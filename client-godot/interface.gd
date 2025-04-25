@@ -7,8 +7,8 @@ extends Node
 @onready var password_field = $Login/Form/PasswordField
 @onready var server_addr_field = $Login/Form/ServerAddrField
 @onready var menu = $Menu
-
-
+@onready var fps_counter = $FPSCounter
+@onready var packets_read = $PacketsRead
 
 func _process(delta: float) -> void:
 	if GlobalNetwork.active == true:
@@ -18,6 +18,9 @@ func _process(delta: float) -> void:
 	
 	if Input.is_action_just_pressed("escape") and GlobalNetwork.active:
 		toggle_menu()
+	
+	fps_counter.text = "FPS: " + str(Engine.get_frames_per_second())
+	packets_read.text = "P/S: " + str(GlobalNetwork.packets_read_per_interval)
 
 func _on_connect_button_pressed() -> void:
 	if !GlobalNetwork.active:
