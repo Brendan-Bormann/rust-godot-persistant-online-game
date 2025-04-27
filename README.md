@@ -1,15 +1,12 @@
-# Persistant Multiplayer Online Game
-An online server-based game, using UDP. This base implementation allows users to connect and move around and see other players in the world in real time. The server runs the game and the client sends commands to be evaluated on the server.
+# Rust / Godot MMO
+A Rust-based, real-time, online, multiplayer RPG. The server uses UDP to send and receive commands and state updates with Godot clients, which use a Godot Extension written in Rust. Clients can connect to the server and they can freely move and interact with other players in real-time.
 
 ### Building & Running
+0. Before starting, you will need to supply your own copy of Redis/Valkey/Dragonflydb. Personally, I am running Dragonflydb in a docker container.
+1. We need to build the project, which provides supporting Rust code to Godot. While in the server folder (`./server`) run `cargo run` and it will start the server. In this process it's also building the `shared` and `gd_ext` Rust libs. The `gd_ext` lib will produce a build artifact that we then need to get into the Godot Client.
+2. By default, the `godot_client` will look into `/server/target/debug` for the corresponding Rust lib. If you want to export the client without the server, you will need to copy the build artifact (for example `gd_ext.dll` on Windows), and move it into the `godot_client` folder. Once in there, find `gd_ext.gdextension` and update the filepath to point to the correct artifact.
 
-1. First, we need to build the client-rust project, which provides supporting Rust code to Godot. We can build it with `cargo build`. This will produce a `.dll` file in `/client-rust/target/debug/client_rust.dll` (unless you built with `--release`).
-
-2. By default, the `client-godot` will see this and use it. If you want to create a client without the server for distribution, you will need to copy the above mentioned `.dll` into the `/client-godot` folder. Then you need to find `rust.gdextension` in that folder and update the file path to `res://client_rust.dll` or whatever filepath you need for the `.dll` location.
-
-3. Last and most simply, start the rust server by going into the `/server` folder and running `cargo run` or optionally `cargo run --release`.
-
-The server will now be running @ `0.0.0.0:8080` so find your server's IP address and share it with the clients. They will enter this address wthin the client and connect!
+You can now start the Godot client and it should be able to connect to the server via an IP address. The server will be running @ `0.0.0.0:8080` so find your server's IP address and share it with the clients. They will enter this address wthin the client and connect!
 
 # Architecture
 ![Architecture](https://i.imgur.com/KOXNykq.png)
