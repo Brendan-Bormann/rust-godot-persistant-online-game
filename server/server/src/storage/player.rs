@@ -1,8 +1,6 @@
 use super::mem_db::MemDB;
-use crate::game::{
-    player::Player,
-    vector::{Vector2, Vector3},
-};
+use shared::game::player::Player;
+use shared::game::vector::{Vector2, Vector3};
 
 impl MemDB {
     pub fn get_player(&mut self, id: &str) -> Result<Option<Player>, ()> {

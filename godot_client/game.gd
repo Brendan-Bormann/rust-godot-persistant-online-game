@@ -11,7 +11,7 @@ func _process(delta: float) -> void:
 			if player_ledger.has(id):
 				var player_scene: Player = instance_from_id(player_ledger[id])
 				var position = Vector3(GlobalNetwork.players[id]['position']['x'], GlobalNetwork.players[id]['position']['y'], GlobalNetwork.players[id]['position']['z'])
-				player_scene.set_target_position(position)
+				player_scene.set_server_position(position)
 			else:
 				var player_scene = create_player(id, GlobalNetwork.players[id]['position'], GlobalNetwork.players[id]['velocity'], GlobalNetwork.players[id]['rotation'], GlobalNetwork.players[id]['username'])
 				player_ledger[id] = player_scene.get_instance_id()

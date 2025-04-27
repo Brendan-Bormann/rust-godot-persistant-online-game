@@ -1,9 +1,9 @@
 use godot::prelude::*;
 
+mod client_network;
 mod network_node;
-mod rust_network;
 
-struct Network;
+struct GDNetwork;
 
 #[gdextension]
-unsafe impl ExtensionLibrary for Network {}
+unsafe impl ExtensionLibrary for GDNetwork {}

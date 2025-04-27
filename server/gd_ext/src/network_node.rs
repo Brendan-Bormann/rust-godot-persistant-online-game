@@ -1,4 +1,4 @@
-use crate::rust_network::RustNetwork;
+use crate::client_network::ClientNetwork;
 
 use godot::classes::{INode, Node};
 use godot::prelude::*;
@@ -7,7 +7,7 @@ use shared::network::packet::Packet;
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct NetworkNode {
-    rust_network: RustNetwork,
+    rust_network: ClientNetwork,
     #[var]
     packets_sent: u32,
     #[var]
@@ -19,10 +19,10 @@ pub struct NetworkNode {
 #[godot_api]
 impl INode for NetworkNode {
     fn init(_base: Base<Node>) -> Self {
-        godot_print!("RUST_NETWORK: NetworkNode Initialized.");
+        godot_print!("RUST: Network Node Initialized.");
 
         Self {
-            rust_network: RustNetwork::new(),
+            rust_network: ClientNetwork::new(),
             packets_sent: 0,
             packets_sent_failed: 0,
             packets_read: 0,

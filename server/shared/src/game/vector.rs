@@ -1,6 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -52,7 +50,7 @@ impl Vector3 {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,

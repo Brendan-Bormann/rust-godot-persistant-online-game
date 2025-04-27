@@ -1,12 +1,13 @@
 class_name Player
-extends Node3D
+extends CharacterBody3D
 
 var id: int = 0
 var active_player: bool = false
 var my_name: String
-var target_position = position
-var position_lerp = 0.15
+var server_position = position
+var server_position_lerp = 0.15
 var camera_rotation_speed = 0.001
+var local_speed = 600
 
 @onready var my_cam = $CameraPivot/PlayerCamera
 @onready var my_cam_pivot = $CameraPivot
@@ -26,19 +27,19 @@ func spawn(new_id: int, new_position: Vector3, new_velocity: Vector3, new_rotati
 	
 	return self
 
-func set_target_position(new_position: Vector3) -> Player:
-	target_position = new_position
+func set_server_position(new_position: Vector3) -> Player:
+	server_position = new_position
 	return self
 
-func move():
+func lerp_towards_server_position():
 	var prev_position = position
-	position = Vector3(lerpf(prev_position.x, target_position.x, position_lerp), lerpf(prev_position.y, target_position.y, position_lerp), lerpf(prev_position.z, target_position.z, position_lerp))
+	position = Vector3(lerpf(prev_position.x, server_position.x, server_position_lerp), lerpf(prev_position.y, server_position.y, server_position_lerp), lerpf(prev_position.z, server_position.z, server_position_lerp))
 
 func _ready() -> void:
 	pass
 
-func _process(delta: float) -> void:
-	move()
+func _physics_process(delta: float) -> void:
+	lerp_towards_server_position()
 	
 	if active_player:
 		if Input.is_action_pressed("right_mouse"):

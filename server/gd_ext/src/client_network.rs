@@ -6,17 +6,17 @@ use std::net::UdpSocket;
 
 const SERVER_PORT: &str = "8080";
 
-pub struct RustNetwork {
+pub struct ClientNetwork {
     udp_socket: Option<UdpSocket>,
 }
 
-impl RustNetwork {
+impl ClientNetwork {
     pub fn new() -> Self {
-        RustNetwork { udp_socket: None }
+        ClientNetwork { udp_socket: None }
     }
 }
 
-impl RustNetwork {
+impl ClientNetwork {
     pub fn start(&mut self, server_ip: String) -> Result<(), ()> {
         match UdpSocket::bind(format!("0.0.0.0:0")) {
             Ok(socket) => {

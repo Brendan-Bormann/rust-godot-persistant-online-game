@@ -1,8 +1,7 @@
-use crate::game;
 use rapier3d::{na::clamp, prelude::*};
+use shared::game::player::Player;
+use shared::game::vector::{Vector2, Vector3};
 use std::collections::HashMap;
-
-use super::{player::Player, vector::Vector2};
 
 pub struct PhysicsManager {
     pub gravity: Vector<Real>,
@@ -103,11 +102,7 @@ impl PhysicsManager {
         self.player_list.get(id).copied()
     }
 
-    pub fn move_player(
-        &mut self,
-        player: &Player,
-        delta_time: f32,
-    ) -> Option<game::vector::Vector3> {
+    pub fn move_player(&mut self, player: &Player, delta_time: f32) -> Option<Vector3> {
         match self.player_list.get(&player.id) {
             Some(_) => {
                 if let Some(rb) = self.get_player_mut(&player.id) {
@@ -121,11 +116,7 @@ impl PhysicsManager {
 
                     let translation = rb.translation();
 
-                    Some(game::vector::Vector3::new(
-                        translation.x,
-                        translation.y,
-                        translation.z,
-                    ))
+                    Some(Vector3::new(translation.x, translation.y, translation.z))
                 } else {
                     None
                 }

@@ -1,8 +1,9 @@
 use std::net::SocketAddr;
 
-use crate::game::player::Player;
-use crate::game::vector::Vector2;
 use crate::storage::mem_db::MemDB;
+use shared::game::player::Player;
+use shared::game::vector::Vector2;
+use shared::network::command::Command;
 use shared::network::packet::Packet;
 
 pub fn process_packet(mem_db: &mut MemDB, sender: &SocketAddr, packet: &Packet) -> Option<Packet> {
@@ -19,6 +20,8 @@ pub fn process_packet(mem_db: &mut MemDB, sender: &SocketAddr, packet: &Packet) 
                 packet.packet_subtype,
                 "y".into(),
             ))
+
+            // Some(Command::new("ping".into(), "".into(), vec![], &sender))
         }
         1 => {
             // auth

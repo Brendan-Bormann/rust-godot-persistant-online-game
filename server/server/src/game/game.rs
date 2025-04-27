@@ -1,5 +1,7 @@
-use crate::game::vector::Vector2;
-use crate::{game::player::Player, storage::mem_db::MemDB};
+use shared::game::player::Player;
+use shared::game::vector::Vector2;
+
+use crate::storage::mem_db::MemDB;
 
 use super::physics::PhysicsManager;
 
