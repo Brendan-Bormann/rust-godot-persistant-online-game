@@ -1,13 +1,19 @@
-use crate::packet::Packet;
 use crate::rust_network::RustNetwork;
 
 use godot::classes::{INode, Node};
 use godot::prelude::*;
+use shared::network::packet::Packet;
 
 #[derive(GodotClass)]
 #[class(base=Node)]
 pub struct NetworkNode {
     rust_network: RustNetwork,
+    #[var]
+    packets_sent: u32,
+    #[var]
+    packets_sent_failed: u32,
+    #[var]
+    packets_read: u32,
 }
 
 #[godot_api]
@@ -17,6 +23,9 @@ impl INode for NetworkNode {
 
         Self {
             rust_network: RustNetwork::new(),
+            packets_sent: 0,
+            packets_sent_failed: 0,
+            packets_read: 0,
         }
     }
 }
@@ -46,19 +55,28 @@ impl NetworkNode {
     fn send_packet(&mut self, packet_type: i16, packet_subtype: i16, payload: String) -> bool {
         let new_packet: Packet = Packet::new(packet_type, packet_subtype, payload);
         match self.rust_network.send_packet(new_packet) {
-            Ok(_) => true,
-            Err(_) => false,
+            Ok(_) => {
+                self.packets_sent += 1;
+                true
+            }
+            Err(_) => {
+                self.packets_sent_failed += 1;
+                false
+            }
         }
     }
 
     #[func]
     fn read_packet(&mut self) -> [GString; 3] {
         match self.rust_network.recv_packet() {
-            Some(packet) => [
-                packet.packet_type.to_string().into(),
-                packet.packet_subtype.to_string().into(),
-                packet.payload.into(),
-            ],
+            Some(packet) => {
+                self.packets_read += 1;
+                [
+                    packet.packet_type.to_string().into(),
+                    packet.packet_subtype.to_string().into(),
+                    packet.payload.into(),
+                ]
+            }
             None => [
                 (-1).to_string().into(),
                 (-1).to_string().into(),

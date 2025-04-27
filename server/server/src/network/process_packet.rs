@@ -1,9 +1,11 @@
+use std::net::SocketAddr;
+
 use crate::game::player::Player;
 use crate::game::vector::Vector2;
-use crate::network::packet::Packet;
 use crate::storage::mem_db::MemDB;
+use shared::network::packet::Packet;
 
-pub fn process_packet(mem_db: &mut MemDB, packet: &Packet) -> Option<Packet> {
+pub fn process_packet(mem_db: &mut MemDB, sender: &SocketAddr, packet: &Packet) -> Option<Packet> {
     // println!(
     //     "- Processing packet from {}: [{}|{}] (size: {})",
     //     addr, packet.packet_type, packet.packet_subtype, len
@@ -22,7 +24,7 @@ pub fn process_packet(mem_db: &mut MemDB, packet: &Packet) -> Option<Packet> {
             // auth
             match packet.packet_subtype {
                 0 => {
-                    // create player - packet.payload = username
+                    // init - packet.payload = username
                     let payload = packet.parse_payload();
                     let username = payload[0].clone();
 

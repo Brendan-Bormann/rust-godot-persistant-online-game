@@ -69,7 +69,7 @@ impl PhysicsManager {
     pub fn create_player_rb(&mut self, id: &str) -> RigidBodyHandle {
         let rigid_body = RigidBodyBuilder::dynamic()
             .translation(vector![0.0, 10.0, 0.0])
-            .linear_damping(5.0)
+            .linear_damping(10.0)
             .gravity_scale(1.0)
             .build();
         let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5).build();

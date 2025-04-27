@@ -182,16 +182,13 @@ grow_horizontal = 2
 text = "FPS: _"
 
 [node name="PacketsRead" type="RichTextLabel" parent="Interface"]
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -369.0
-offset_top = 4.0
-offset_right = -74.0
-offset_bottom = 59.0
-grow_horizontal = 2
-text = "TCP: 0
-UDP: 0"
+offset_left = 17.0
+offset_top = 12.0
+offset_right = 151.0
+offset_bottom = 154.0
+text = "Sent (S): _
+Sent (F): _
+Read(S): _"
 
 [node name="Game" type="Node" parent="."]
 script = ExtResource("4_lgr22")

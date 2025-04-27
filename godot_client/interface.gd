@@ -20,7 +20,7 @@ func _process(delta: float) -> void:
 		toggle_menu()
 	
 	fps_counter.text = "FPS: " + str(Engine.get_frames_per_second())
-	packets_read.text = "P/S: " + str(GlobalNetwork.packets_read_per_interval)
+	packets_read.text = "Sent (S): " + str(GlobalNetwork.last_packets_sent_diff) +"\nSent (F): " + str(GlobalNetwork.last_packets_sent_failed_diff) + "\nRead(S): " + str(GlobalNetwork.last_packets_read_diff)
 
 func _on_connect_button_pressed() -> void:
 	if !GlobalNetwork.active:

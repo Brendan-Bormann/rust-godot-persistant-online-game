@@ -20,7 +20,7 @@ impl Player {
             velocity: Vector3::zero(),
             input_direction: Vector2::zero(),
             rotation: 0.0,
-            speed: 100.0,
+            speed: 60.0,
         }
     }
 

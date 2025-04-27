@@ -1,11 +1,10 @@
 use godot::global::{godot_error, godot_print};
 
-use crate::packet::Packet;
-
+use shared::network::packet::Packet;
 use std::io::ErrorKind;
 use std::net::UdpSocket;
 
-const UDP_PORT: &str = "8081";
+const SERVER_PORT: &str = "8080";
 
 pub struct RustNetwork {
     udp_socket: Option<UdpSocket>,
@@ -22,7 +21,9 @@ impl RustNetwork {
         match UdpSocket::bind(format!("0.0.0.0:0")) {
             Ok(socket) => {
                 socket.set_nonblocking(true).unwrap();
-                socket.connect(format!("{server_ip}:{UDP_PORT}")).unwrap();
+                socket
+                    .connect(format!("{server_ip}:{SERVER_PORT}"))
+                    .unwrap();
                 self.udp_socket = Some(socket);
                 godot_print!("RUST_NETWORK: Connected to SERVER");
                 Ok(())

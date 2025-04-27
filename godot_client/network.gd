@@ -13,11 +13,17 @@ const TIME_OUT = 5
 @export var my_player: Node3D
 @export var players: Dictionary
 
-@export var packets_read: int
-@export var packets_read_recently: int
-@export var packets_read_per_interval: int
-@export var packet_read_interval = 1.0
-var packet_read_timer = 0.0
+
+@export var last_packets_sent: int
+@export var last_packets_sent_failed: int
+@export var last_packets_read: int
+
+@export var last_packets_sent_diff: int
+@export var last_packets_sent_failed_diff: int
+@export var last_packets_read_diff: int
+
+@export var packet_stat_check_interval = 1.0
+var packet_stat_check_timer = 0.0
 
 var my_player_last_rotation: float;
 
@@ -45,13 +51,18 @@ func _physics_process(delta: float) -> void:
 		else:
 			timer += delta
 	
-	if packet_read_timer > packet_read_interval:
-		packets_read_per_interval = packets_read_recently
-		packets_read += packets_read_recently
-		packets_read_recently = 0
-		packet_read_timer = 0.0
+	if packet_stat_check_timer > packet_stat_check_interval:
+		last_packets_sent_diff = packets_sent - last_packets_sent
+		last_packets_sent_failed_diff = packets_sent_failed - last_packets_sent_failed
+		last_packets_read_diff = packets_read - last_packets_read
+		
+		last_packets_sent = packets_sent
+		last_packets_sent_failed = packets_sent_failed
+		last_packets_read = packets_read
+		
+		packet_stat_check_timer = 0
 	else:
-		packet_read_timer += delta
+		packet_stat_check_timer += delta
 
 func handle_packet(packet: Array[String]):
 	var packet_type: int = int(packet[0])
