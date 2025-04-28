@@ -107,7 +107,7 @@ impl PhysicsManager {
             Some(_) => {
                 if let Some(rb) = self.get_player_mut(&player.id) {
                     let mut velocity = *rb.linvel();
-                    let rotated_di = Vector2::rotate(player.input_direction, player.rotation);
+                    let rotated_di = player.input_direction.clone().rotate(player.rotation);
 
                     velocity.x += clamp(rotated_di.x * player.speed * delta_time, -5.0, 5.0);
                     velocity.z += clamp(rotated_di.y * player.speed * delta_time, -5.0, 5.0);

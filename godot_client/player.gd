@@ -5,7 +5,7 @@ var id: int = 0
 var active_player: bool = false
 var my_name: String
 var server_position = position
-var server_position_lerp = 0.15
+var server_position_lerp = 0.175
 var camera_rotation_speed = 0.001
 var local_speed = 600
 

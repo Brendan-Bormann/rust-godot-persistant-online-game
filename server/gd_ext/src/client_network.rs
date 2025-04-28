@@ -5,6 +5,7 @@ use std::io::ErrorKind;
 use std::net::UdpSocket;
 
 const SERVER_PORT: &str = "8080";
+const CLIENT_PORT: &str = "8081";
 
 pub struct ClientNetwork {
     udp_socket: Option<UdpSocket>,
@@ -18,7 +19,7 @@ impl ClientNetwork {
 
 impl ClientNetwork {
     pub fn start(&mut self, server_ip: String) -> Result<(), ()> {
-        match UdpSocket::bind(format!("0.0.0.0:0")) {
+        match UdpSocket::bind(format!("0.0.0.0:{CLIENT_PORT}")) {
             Ok(socket) => {
                 socket.set_nonblocking(true).unwrap();
                 socket

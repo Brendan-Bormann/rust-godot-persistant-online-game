@@ -17,8 +17,8 @@ impl MemDB {
         self.con.get(&k)
     }
 
-    pub fn get_raw(&mut self, key: &str) -> RedisResult<Option<String>> {
-        self.con.get(&key)
+    pub fn get_raw(&mut self, raw_key: &str) -> RedisResult<Option<String>> {
+        self.con.get(&raw_key)
     }
 
     pub fn set(&mut self, pre: &str, key: &str, value: &str) -> RedisResult<()> {

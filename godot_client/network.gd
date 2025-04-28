@@ -4,15 +4,14 @@ extends NetworkNode
 var poll_rate = 0.01
 var timer = 0
 
-var last_dir: Vector2
-var last_rot: float
+var last_direction: Vector2
+var last_rotation: float
 var last_pong = 0
 const TIME_OUT = 5
 
 @export var my_id = 0
 @export var my_player: Node3D
 @export var players: Dictionary
-
 
 @export var last_packets_sent: int
 @export var last_packets_sent_failed: int
@@ -46,7 +45,7 @@ func _physics_process(delta: float) -> void:
 		
 		if timer > poll_rate:
 			timer = 0
-			send_movement_packet()
+			send_input_packet()
 			self.send_packet(2, 0, "")
 		else:
 			timer += delta
@@ -95,18 +94,20 @@ func handle_packet(packet: Array[String]):
 func send_ping_packet():
 	self.send_packet(0, 0, "")
 
-func send_movement_packet():
+func send_input_packet():
 	if my_player == null:
 		return
-		
-	var dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
-	var new_rotation = snapped(my_player.rotation.y, 0.01);
 	
-	if dir == last_dir:
-		return
+	var direction = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	var dir_snapped = Vector2(snapped(direction.x, 0.01), snapped(direction.y, 0.01))
+	var rotation_snapped = snapped(my_player.rotation.y, 0.01) * -1;
 	
-	self.send_packet(3, 0, str(my_id) + ";" + str(snapped(dir.x, 0.01)) + "," + str(snapped(dir.y, 0.01)) + ";" + str(new_rotation))
-	last_dir = dir
+	if dir_snapped == last_direction && rotation_snapped == last_rotation:
+		return;
+	
+	self.send_packet(3, 0, str(dir_snapped.x) + "," + str(dir_snapped.y) + ";" + str(rotation_snapped))
+	last_direction = dir_snapped
+	last_rotation = rotation_snapped
 
 func handle_init_packet(data):
 	my_id = data['id']

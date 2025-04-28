@@ -1,0 +1,13 @@
+services:
+  valkey:
+    image: valkey/valkey
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - '6379:6379'
+    volumes:
+      - 'valkey_data:/data'
+
+volumes:
+  valkey_data:
+    driver: local

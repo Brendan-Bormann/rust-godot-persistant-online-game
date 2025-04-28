@@ -7,7 +7,7 @@ pub struct Player {
     pub position: Vector3,
     pub velocity: Vector3,
     pub input_direction: Vector2,
-    pub rotation: f32,
+    pub rotation: f32, // in radians
     pub speed: f32,
 }
 
@@ -68,5 +68,3 @@ impl ToString for Player {
         )
     }
 }
-
-impl Player {}

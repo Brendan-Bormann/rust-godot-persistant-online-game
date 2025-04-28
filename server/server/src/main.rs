@@ -4,7 +4,7 @@ mod storage;
 
 use crate::game::game::Game;
 use game::physics::PhysicsManager;
-use network::network::NetworkManager;
+use network::manager::NetworkManager;
 use storage::mem_db::MemDB;
 
 use r2d2;
@@ -49,11 +49,12 @@ async fn main() {
                 accumulator -= fixed_time_step;
             }
 
-            // Sleep for a little to avoid burning CPU
+            // avoid CPU burnout
             thread::sleep(Duration::from_millis(1));
         }
     });
 
-    let mut network = NetworkManager::new(PORT, pool).await;
+    let network_mem_db = MemDB::new(pool.get().unwrap());
+    let mut network = NetworkManager::new(PORT, network_mem_db).await;
     let _ = network.start().await;
 }
