@@ -10,7 +10,7 @@ You can now start the Godot client and it should be able to connect to the serve
 
 
 # Gameplay
-![Architecture](https://imgur.com/a/cfaNyT6)
+![Gameplay](https://imgur.com/a/cfaNyT6.png)
 
 # Architecture
 ![Architecture](https://i.imgur.com/KOXNykq.png)
