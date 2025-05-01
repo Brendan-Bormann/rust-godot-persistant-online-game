@@ -1,7 +1,11 @@
 use rapier3d::{na::clamp, prelude::*};
-use shared::game::player::Player;
-use shared::game::vector::{Vector2, Vector3};
-use std::collections::HashMap;
+use shared::game::{
+    player::Player,
+    vector::{Vector2, Vector3},
+};
+use std::collections::{HashMap, HashSet};
+
+use crate::storage::mem_db::{self, MemDB};
 
 pub struct PhysicsManager {
     pub gravity: Vector<Real>,
@@ -19,11 +23,12 @@ pub struct PhysicsManager {
     pub collider_set: ColliderSet,
     pub rigid_body_set: RigidBodySet,
 
-    pub player_list: HashMap<String, RigidBodyHandle>,
+    pub entity_list: HashMap<String, RigidBodyHandle>,
+    pub mem_db: MemDB,
 }
 
 impl PhysicsManager {
-    pub fn new() -> Self {
+    pub fn new(mem_db: MemDB) -> Self {
         let gravity = vector![0.0, -20.0, 0.0];
         let integration_parameters = IntegrationParameters::default();
         let physics_pipeline = PhysicsPipeline::new();
@@ -59,77 +64,98 @@ impl PhysicsManager {
             event_handler,
             collider_set,
             rigid_body_set,
-            player_list: HashMap::new(),
+            entity_list: HashMap::new(),
+            mem_db,
         }
     }
 }
 
 impl PhysicsManager {
-    pub fn create_player_rb(&mut self, id: &str) -> RigidBodyHandle {
+    pub fn create_entity(&mut self, id: &str, position: Vector3) -> RigidBodyHandle {
         let rigid_body = RigidBodyBuilder::dynamic()
-            .translation(vector![0.0, 10.0, 0.0])
+            .translation(vector![position.x, position.y, position.z])
             .linear_damping(10.0)
             .gravity_scale(1.0)
             .build();
         let collider = ColliderBuilder::cuboid(0.5, 0.5, 0.5).build();
+        let rb_handle = self.rigid_body_set.insert(rigid_body);
+        self.collider_set
+            .insert_with_parent(collider, rb_handle, &mut self.rigid_body_set);
 
-        let player_body_handle = self.rigid_body_set.insert(rigid_body);
+        self.entity_list.insert(id.into(), rb_handle);
 
-        self.collider_set.insert_with_parent(
-            collider,
-            player_body_handle,
-            &mut self.rigid_body_set,
-        );
-
-        self.player_list.insert(id.into(), player_body_handle);
-
-        player_body_handle
+        rb_handle
     }
 
-    pub fn get_player_mut(&mut self, id: &str) -> Option<&mut RigidBody> {
-        self.player_list
+    pub fn get_entity(&mut self, id: &str) -> Option<&mut RigidBody> {
+        self.entity_list
             .get(id)
             .and_then(|h| self.rigid_body_set.get_mut(*h))
     }
 
-    pub fn get_player(&self, id: &str) -> Option<&RigidBody> {
-        self.player_list
-            .get(id)
-            .and_then(|h| self.rigid_body_set.get(*h))
-    }
+    pub fn update_entity(
+        &mut self,
+        delta_time: f32,
+        id: &str,
+        input_direction: Vector2,
+        rotation: f32,
+        speed: f32,
+    ) {
+        if let Some(entity) = self.get_entity(id) {
+            let mut velocity = *entity.linvel();
+            let rotated_di = input_direction.clone().rotate(rotation);
 
-    pub fn get_player_handle(&self, id: &str) -> Option<RigidBodyHandle> {
-        self.player_list.get(id).copied()
-    }
+            velocity.x += clamp(rotated_di.x * speed * delta_time, -5.0, 5.0);
+            velocity.z += clamp(rotated_di.y * speed * delta_time, -5.0, 5.0);
 
-    pub fn move_player(&mut self, player: &Player, delta_time: f32) -> Option<Vector3> {
-        match self.player_list.get(&player.id) {
-            Some(_) => {
-                if let Some(rb) = self.get_player_mut(&player.id) {
-                    let mut velocity = *rb.linvel();
-                    let rotated_di = player.input_direction.clone().rotate(player.rotation);
-
-                    velocity.x += clamp(rotated_di.x * player.speed * delta_time, -5.0, 5.0);
-                    velocity.z += clamp(rotated_di.y * player.speed * delta_time, -5.0, 5.0);
-
-                    rb.set_linvel(velocity, true);
-
-                    let translation = rb.translation();
-
-                    Some(Vector3::new(translation.x, translation.y, translation.z))
-                } else {
-                    None
-                }
-            }
-            None => {
-                let _handle = self.create_player_rb(&player.id);
-                self.move_player(player, delta_time)
-            }
+            entity.set_linvel(velocity, true);
         }
     }
 
-    pub fn remove_player(&mut self, id: &str) {
-        if let Some(handle) = self.player_list.remove(id) {
+    pub fn update_entities(&mut self, delta_time: f32) {
+        let mut players = self.mem_db.get_all_players();
+
+        for player in &mut players {
+            let entity = self.get_entity(&player.id).cloned();
+
+            if entity.is_some() {
+                self.update_entity(
+                    delta_time,
+                    &player.id,
+                    player.input_direction,
+                    player.rotation,
+                    player.speed,
+                );
+
+                let new_translation = self.get_entity(&player.id).unwrap().translation();
+                let new_position =
+                    Vector3::new(new_translation.x, new_translation.y, new_translation.z);
+
+                player.position = new_position;
+                let _ = self.mem_db.upsert_player(player.to_owned());
+            } else {
+                self.create_entity(&player.id, player.position);
+            }
+        }
+
+        let all_players: Vec<Player> = self.mem_db.get_all_players();
+        let valid_ids: HashSet<_> = all_players.iter().map(|p| &p.id).collect();
+
+        let dangling_ids: Vec<String> = self
+            .entity_list
+            .keys()
+            .filter(|id| !valid_ids.contains(*id))
+            .cloned()
+            .collect();
+
+        for id in dangling_ids {
+            self.remove_entity(&id);
+            self.entity_list.remove(&id);
+        }
+    }
+
+    pub fn remove_entity(&mut self, id: &str) {
+        if let Some(handle) = self.entity_list.remove(id) {
             self.rigid_body_set.remove(
                 handle,
                 &mut self.island_manager,
@@ -158,5 +184,10 @@ impl PhysicsManager {
             &self.physics_hooks,
             &self.event_handler,
         );
+    }
+
+    pub fn tick(&mut self, delta_time: f32) {
+        self.step(delta_time);
+        self.update_entities(delta_time);
     }
 }

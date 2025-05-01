@@ -1,20 +1,25 @@
-use std::{collections::HashMap, net::SocketAddr, time::Instant};
+use shared::game::player::Player;
+use std::sync::mpsc::{Receiver, channel};
+use std::time::Duration;
+use std::{collections::HashMap, net::SocketAddr, sync::mpsc::Sender, time::Instant};
 use tokio::net::UdpSocket;
+use tracing::warn;
 
+use crate::game::command::{Command, CommandType, SubcommandType};
 use crate::storage::mem_db::MemDB;
-use shared::{
-    game::{player::Player, vector::Vector2},
-    network::packet::Packet,
-};
+use shared::network::packet::Packet;
+
+use super::session::{self, Session};
 
 pub struct NetworkManager {
     udp_socket: UdpSocket,
     mem_db: MemDB,
     active_sessions: HashMap<SocketAddr, Session>,
+    command_tx: Sender<Command>,
 }
 
 impl NetworkManager {
-    pub async fn new(udp_port: &str, mem_db: MemDB) -> Self {
+    pub async fn new(udp_port: &str, mem_db: MemDB, command_tx: Sender<Command>) -> Self {
         let udp_socket = UdpSocket::bind(format!("0.0.0.0:{udp_port}"))
             .await
             .unwrap();
@@ -23,16 +28,17 @@ impl NetworkManager {
             udp_socket,
             mem_db,
             active_sessions: HashMap::new(),
+            command_tx,
         }
     }
 }
 
 impl NetworkManager {
-    pub async fn start(&mut self) -> anyhow::Result<()> {
+    pub async fn start(&mut self) -> Result<(), ()> {
         loop {
             match self.recv_packet().await {
                 Ok((packet, addr)) => {
-                    self.handle_packet(addr, packet).await;
+                    self.handle_packet(addr, &packet).await;
                 }
                 Err(_) => {}
             }
@@ -64,21 +70,12 @@ impl NetworkManager {
         }
     }
 
-    async fn handle_packet(&mut self, sender: SocketAddr, packet: Packet) {
-        let current_session = self.manage_session(sender);
-        let response = self.process_packet(&current_session, &packet);
-
-        if response.is_some() {
-            let response = response.unwrap().encode();
-            let result = self.udp_socket.send_to(response.as_bytes(), sender).await;
-
-            match result {
-                Ok(_) => {}
-                Err(e) => match e.kind() {
-                    _ => {
-                        eprintln!("Error sending packet: {}", e);
-                    }
-                },
+    async fn send_packet(&mut self, addr: SocketAddr, packet: &Packet) {
+        let data = packet.clone().encode();
+        match self.udp_socket.send_to(data.as_bytes(), addr).await {
+            Ok(_) => {}
+            Err(_) => {
+                warn!("Failed to send packet!")
             }
         }
     }
@@ -116,132 +113,162 @@ impl NetworkManager {
         }
     }
 
-    pub fn process_packet(&mut self, session: &Session, packet: &Packet) -> Option<Packet> {
-        // println!(
-        //     "- Processing packet from {}: [{}|{}] (size: {})",
-        //     addr, packet.packet_type, packet.packet_subtype, len
-        // );
+    pub async fn handle_packet(&mut self, sender: SocketAddr, packet: &Packet) -> Result<(), ()> {
+        let mut current_session = self.manage_session(sender);
+        let (resp_tx, resp_rx) = channel::<Result<(), ()>>();
+        let command = Command::from_packet(packet.clone(), current_session.clone(), resp_tx);
 
-        match packet.packet_type {
-            0 => {
-                // ping
-                Some(Packet::new(
-                    packet.packet_type,
-                    packet.packet_subtype,
-                    "y".into(),
-                ))
-            }
-            1 => {
-                // auth
-                match packet.packet_subtype {
-                    0 => {
-                        // init - packet.payload = username
-                        let payload = packet.parse_payload();
-                        let username = payload[0].clone();
-
-                        if let Some(player_id) = &session.player_id {
-                            let player = self.mem_db.get_player(&player_id).unwrap();
-
-                            if player.is_some() {
-                                return Some(Packet::new(
-                                    packet.packet_type,
-                                    packet.packet_subtype,
-                                    player.unwrap().to_string(),
-                                ));
-                            } else {
-                                self.set_session_player_id(session.peer, None);
-                            }
-                        }
-
-                        // TODO: find existing player
-
-                        let next_key = self.mem_db.get_next_id("player");
-                        let player = self
-                            .mem_db
-                            .upsert_player(Player::new(next_key, username))
-                            .unwrap();
-
-                        self.set_session_player_id(session.peer, Some(player.id.clone()));
-
-                        Some(Packet::new(
-                            packet.packet_type,
-                            packet.packet_subtype,
-                            player.to_string(),
-                        ))
-                    }
-                    1 => {
-                        // login
-                        println!("logged player in");
-                        unimplemented!()
-                    }
-                    2 => {
-                        //logout
-                        println!("logged player out");
-                        unimplemented!()
-                    }
-                    _ => None,
+        if let Some(command) = command {
+            match command.command_type {
+                CommandType::Network => {
+                    self.handle_network_command(&mut current_session, command, &packet)
+                        .await
                 }
-            }
-            2 => {
-                // update
-                match packet.packet_subtype {
-                    0 => {
-                        if session.player_id.is_none() {
-                            return None;
-                        }
-
-                        // players
-                        let players: Vec<Player> = self.mem_db.get_all_players();
-                        let player_data: String = Player::player_vec_to_string(players);
-                        Some(Packet::new(2, 0, player_data))
-                    }
-                    _ => None,
+                CommandType::Auth => {
+                    self.handle_auth_command(&mut current_session, command)
+                        .await
                 }
-            }
-            3 => {
-                // input
-                match packet.packet_subtype {
-                    0 => {
-                        if session.player_id.is_none() {
-                            return None;
-                        }
-
-                        // movement_input - packet.payload = dir_x,dir_y;rotation
-                        let payload = packet.parse_payload();
-                        let id = session.player_id.clone().unwrap();
-
-                        let dirs: Vec<&str> = payload[0].split(",").collect();
-                        let x: f32 = dirs[0].parse().unwrap_or(0.0);
-                        let y: f32 = dirs[1].parse().unwrap_or(0.0);
-
-                        let rotation: f32 = payload[1].parse().unwrap_or(0.0);
-
-                        let input_direction: Vector2 = Vector2::new(x, y);
-                        self.mem_db
-                            .set_player_movement_input(id, input_direction, rotation);
-                        Some(Packet::new(3, 0, "y".into()))
-                    }
-                    _ => None,
+                CommandType::Update => {
+                    self.handle_update_command(&mut current_session, command, &packet)
+                        .await
                 }
+                CommandType::Input => {
+                    self.handle_engine_command(&mut current_session, command, &packet, resp_rx)
+                        .await
+                }
+                _ => Ok(()),
             }
-            _ => None,
+        } else {
+            Ok(())
         }
     }
-}
 
-#[derive(Clone)]
-pub struct Session {
-    peer: SocketAddr,
-    player_id: Option<String>,
-    last_active: Instant,
-}
+    pub async fn handle_network_command(
+        &mut self,
+        session: &mut Session,
+        command: Command,
+        original_packet: &Packet,
+    ) -> Result<(), ()> {
+        match command.command_subtype {
+            SubcommandType::Ping => {
+                self.send_packet(
+                    session.peer,
+                    &Packet::new(
+                        original_packet.packet_type,
+                        original_packet.packet_subtype,
+                        "y".into(),
+                    ),
+                )
+                .await;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
 
-impl Session {
-    pub fn new(peer: SocketAddr) -> Session {
-        Session {
-            peer,
-            player_id: None,
-            last_active: Instant::now(),
+    pub async fn handle_auth_command(
+        &mut self,
+        session: &mut Session,
+        command: Command,
+    ) -> Result<(), ()> {
+        match command.command_subtype {
+            SubcommandType::Login => {
+                let args = command.parse_args();
+                let username = args[0].clone();
+
+                if let Some(player_id) = session.player_id.clone() {
+                    let player = self
+                        .mem_db
+                        .get_player(&player_id)
+                        .expect("Failed to get user from session.");
+
+                    if let Some(player) = player {
+                        self.send_packet(session.peer, &Packet::new(1, 0, player.to_string()))
+                            .await;
+                        return Ok(());
+                    } else {
+                        self.set_session_player_id(session.peer, None);
+                    }
+                }
+
+                let next_key = self.mem_db.get_next_id("player");
+                let player = self
+                    .mem_db
+                    .upsert_player(Player::new(next_key, username))
+                    .unwrap();
+
+                self.set_session_player_id(session.peer, Some(player.id.clone()));
+                self.send_packet(session.peer, &Packet::new(1, 0, player.to_string()))
+                    .await;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    pub async fn handle_update_command(
+        &mut self,
+        session: &mut Session,
+        command: Command,
+        original_packet: &Packet,
+    ) -> Result<(), ()> {
+        match command.command_subtype {
+            SubcommandType::Entity => {
+                let players = self.mem_db.get_all_players();
+                self.send_packet(
+                    session.peer,
+                    &Packet::new(
+                        original_packet.packet_type,
+                        original_packet.packet_subtype,
+                        Player::player_vec_to_string(players),
+                    ),
+                )
+                .await;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    pub async fn handle_engine_command(
+        &mut self,
+        session: &Session,
+        command: Command,
+        original_packet: &Packet,
+        resp_rx: Receiver<Result<(), ()>>,
+    ) -> Result<(), ()> {
+        let result = self.command_tx.send(command);
+
+        if result.is_err() {
+            warn!("Error in command channel: {}", result.unwrap_err());
+            return Err(());
+        }
+
+        match resp_rx.recv_timeout(Duration::from_millis(100)) {
+            Ok(response) => {
+                let resp_packet: Packet;
+
+                if response.is_ok() {
+                    resp_packet = Packet::new(
+                        original_packet.packet_type,
+                        original_packet.packet_subtype,
+                        "y".into(),
+                    );
+                } else {
+                    resp_packet = Packet::new(
+                        original_packet.packet_type,
+                        original_packet.packet_subtype,
+                        "n".into(),
+                    );
+                }
+
+                let _ = self.send_packet(session.peer, &resp_packet).await;
+                return Ok(());
+            }
+            Err(e) => {
+                eprintln!("Error in command channel: {}", e);
+                return Err(());
+            }
         }
     }
 }
