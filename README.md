@@ -14,3 +14,6 @@ You can now start the Godot client and it should be able to connect to the serve
 
 # Architecture
 ![Architecture](https://i.imgur.com/KOXNykq.png)
+
+# Proposed New Architecture
+![New Architecture](https://i.imgur.com/Bu8rRNh.png)
