@@ -1,5 +1,5 @@
 [package]
-name = "gd_ext"
+name = "server_gdext"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,3 +9,4 @@ crate-type = ["cdylib"]
 [dependencies]
 godot = "0.2.4"
 shared = { path = "../shared" }
+bitcode = "0.6.6"

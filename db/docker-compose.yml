@@ -1,0 +1,25 @@
+services:
+
+  valkey:
+    image: valkey/valkey
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - '6379:6379'
+    # volumes:
+    #   - 'data:./vk'
+  
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: pass
+    ports:
+      - '5432:5432'
+    # volumes:
+    #   - pgdata:./pg 
+
+volumes:
+  valkey_data:
+    driver: local

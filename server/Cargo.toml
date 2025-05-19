@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["server", "gd_ext", "shared"]
+members = ["server", "client_gdext", "shared", "server_gdext", "test_client"]

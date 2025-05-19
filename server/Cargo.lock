@@ -81,6 +81,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e764a1d40d510daf35e07be9eb06e75770908c27d411ee6c92109c9840eaaf7"
 
 [[package]]
+name = "bitcode"
+version = "0.6.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf300f4aa6e66f3bdff11f1236a88c622fe47ea814524792240b4d554d9858ee"
+dependencies = [
+ "arrayvec",
+ "bitcode_derive",
+ "bytemuck",
+ "glam",
+ "serde",
+]
+
+[[package]]
+name = "bitcode_derive"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42b6b4cb608b8282dc3b53d0f4c9ab404655d562674c682db7e6c0458cc83c23"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bitflags"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -109,6 +133,15 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "client_gdext"
+version = "0.1.0"
+dependencies = [
+ "bitcode",
+ "godot",
+ "shared",
+]
 
 [[package]]
 name = "combine"
@@ -227,14 +260,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
  "percent-encoding",
-]
-
-[[package]]
-name = "gd_ext"
-version = "0.1.0"
-dependencies = [
- "godot",
- "shared",
 ]
 
 [[package]]
@@ -1066,13 +1091,25 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
+ "bitcode",
+ "crossbeam-channel",
  "r2d2",
  "rapier3d",
+ "rayon",
  "redis",
  "shared",
  "tokio",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "server_gdext"
+version = "0.1.0"
+dependencies = [
+ "bitcode",
+ "godot",
+ "shared",
 ]
 
 [[package]]
@@ -1093,6 +1130,9 @@ dependencies = [
 [[package]]
 name = "shared"
 version = "0.1.0"
+dependencies = [
+ "bitcode",
+]
 
 [[package]]
 name = "signal-hook-registry"
@@ -1179,6 +1219,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "test_client"
+version = "0.1.0"
+dependencies = [
+ "bitcode",
+ "shared",
+ "tokio",
 ]
 
 [[package]]

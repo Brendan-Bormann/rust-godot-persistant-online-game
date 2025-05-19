@@ -1,6 +1,6 @@
 use godot::prelude::*;
 
-mod client_network;
+mod network_manager;
 mod network_node;
 
 struct GDNetwork;

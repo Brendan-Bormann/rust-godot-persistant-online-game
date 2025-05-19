@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, PartialEq, Copy)]
+use bitcode::{Decode, Encode};
+
+#[derive(Decode, Encode, Debug, Clone, PartialEq, Copy)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -50,7 +52,7 @@ impl Vector3 {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Decode, Encode, Debug, Clone, PartialEq, Copy)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32,
@@ -104,6 +106,19 @@ impl Vector2 {
         Vector2 {
             x: self.x * cos_theta - self.y * sin_theta,
             y: self.x * sin_theta + self.y * cos_theta,
+        }
+    }
+
+    pub fn multiply(&mut self, factor: f32) {
+        self.x *= factor;
+        self.y *= factor;
+    }
+
+    pub fn to_vector3(&mut self) -> Vector3 {
+        Vector3 {
+            x: self.x,
+            y: 0.0,
+            z: self.y,
         }
     }
 }

@@ -4,4 +4,4 @@ compatibility_minimum = 4.1
 reloadable = true
 
 [libraries]
-windows.debug.x86_64 =   "res://../server/target/debug/gd_ext.dll"
+windows.debug.x86_64 =   "res://../server/target/debug/client_gdext.dll"

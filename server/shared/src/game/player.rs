@@ -1,13 +1,14 @@
 use crate::game::vector::{Vector2, Vector3};
+use bitcode::{Decode, Encode};
 
-#[derive(Debug, Clone)]
+#[derive(Decode, Encode, Debug, Clone, PartialEq)]
 pub struct Player {
     pub id: String,
     pub username: String,
     pub position: Vector3,
     pub velocity: Vector3,
     pub input_direction: Vector2,
-    pub rotation: f32, // in radians
+    pub rotation: f32, // radians
     pub speed: f32,
 }
 
@@ -16,11 +17,11 @@ impl Player {
         Player {
             id,
             username,
-            position: Vector3::zero(),
+            position: Vector3::new(0.0, 0.5, 0.0),
             velocity: Vector3::zero(),
             input_direction: Vector2::zero(),
             rotation: 0.0,
-            speed: 60.0,
+            speed: 1.0,
         }
     }
 
@@ -66,5 +67,14 @@ impl ToString for Player {
             self.rotation,
             self.speed
         )
+    }
+}
+
+impl Player {
+    pub fn apply_input(&mut self, delta_time: f64) {
+        let mut delta = self.input_direction.clone();
+        delta.multiply(self.speed * delta_time as f32);
+
+        self.position.add_to(delta.to_vector3());
     }
 }
